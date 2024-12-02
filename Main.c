@@ -60,7 +60,59 @@ int main()
 	// Remove the next line character
     buffer[usercommand - 1] = '\0';
 
-	// New process to execute the command
+/*
+    // New process to execute the command
+    pid_t pid = fork();
+
+	if (pid == -1) {
+        // Error handling for fork()
+        perror("fork failed");
+        return 1;
+    } else if (pid == 0) {
+        // Child process: execute the user command
+        // Use execvp to execute the command
+        char *args[] = {buffer, NULL}; // Prepare arguments for execvp
+        execvp(args[0], args); // Execute the command
+    // If execvp fails, print an error and exit the child process
+        perror("execvp failed");
+        return 1;
+    } else {
+        // Parent process: wait for the child to finish
+        wait(NULL);
+    }
+
+	// The prompt enseash that we want to display
+	const char *enseash = "enseash % ";
+	
+	// The number of characters in our message
+	int lengthenseash = strlen(enseash);
+	
+	// Display the enseash message
+	write(STDOUT_FILENO, enseash, lengthenseash);
+
+	}
+*/
+
+
+	// QUESTION 3
+	
+	// Management of the shell output with the command "exit"
+	if (strcmp(buffer, "exit") == 0) {
+            const char *exitmessage = "Bye bye...\n$";
+			int lengthexitmessage = strlen(exitmessage);
+            write(STDOUT_FILENO, exitmessage, lengthexitmessage);
+            break;
+    }
+	
+	// Management of the shell output with <ctrl>+d
+    if (usercommand == 0) {
+		const char *exitmessage = "Bye bye...\n$";
+		int lengthexitmessage = strlen(exitmessage);
+        write(STDOUT_FILENO, exitmessage, lengthexitmessage);        
+        break;
+    }
+
+	    // New process to execute the command
     pid_t pid = fork();
 
 	if (pid == -1) {
@@ -92,14 +144,6 @@ int main()
 	}
 
 
-	// QUESTION 3
-	
-	If user types 'exit', terminate the shell
-    if (strcmp(buffer, "exit") == 0) {
-       return 0;
-    }
-
-	
 	return 0;
 }
 
