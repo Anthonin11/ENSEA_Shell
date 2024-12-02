@@ -23,9 +23,19 @@
 
 
 #include <stdio.h>
+#include <unistd.h>
+#include <string.h>
 
-int main(int argc, char **argv)
+int main()
 {
+	// The message that we want to display
+	const char *welcomemessage = "$ ./enseash\nWelcome to ENSEA Tiny Shell.\nType 'exit' to quit.\nenseash %";
+	
+	// The number of characters in our message
+	int lengthmessage = strlen(welcomemessage);
+	
+	// The function that displays our message
+	write(STDOUT_FILENO, welcomemessage, lengthmessage);
 	
 	return 0;
 }
