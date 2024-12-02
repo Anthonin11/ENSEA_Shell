@@ -22,20 +22,83 @@
  */
 
 
-#include <stdio.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 int main()
 {
-	// The message that we want to display
-	const char *welcomemessage = "$ ./enseash\nWelcome to ENSEA Tiny Shell.\nType 'exit' to quit.\nenseash %";
+	// QUESTION 1.
+	
+	// The welcome message that we want to display
+	const char *welcomemessage = "$ ./enseash\nWelcome to ENSEA Tiny Shell.\nType 'exit' to quit.\nenseash % ";
 	
 	// The number of characters in our message
 	int lengthmessage = strlen(welcomemessage);
 	
-	// The function that displays our message
+	// Display the welcome message
 	write(STDOUT_FILENO, welcomemessage, lengthmessage);
+	
+
+	
+	// QUESTION 2.
+
+	// Loop that read the user command, execute it and ask again for user command.
+	while(1)
+	{
+	// The maximum user command length
+    char buffer[1024];
+    
+    // The user command length
+    ssize_t usercommand;	
+	
+	// Read the user command
+	usercommand = read(STDIN_FILENO, buffer, sizeof(buffer));
+	
+	// Remove the next line character
+    buffer[usercommand - 1] = '\0';
+
+	// New process to execute the command
+    pid_t pid = fork();
+
+	if (pid == -1) {
+        // Error handling for fork()
+        perror("fork failed");
+        return 1;
+    } else if (pid == 0) {
+        // Child process: execute the user command
+        // Use execvp to execute the command
+        char *args[] = {buffer, NULL}; // Prepare arguments for execvp
+        execvp(args[0], args); // Execute the command
+    // If execvp fails, print an error and exit the child process
+        perror("execvp failed");
+        return 1;
+    } else {
+        // Parent process: wait for the child to finish
+        wait(NULL);
+    }
+
+	// The prompt enseash that we want to display
+	const char *enseash = "enseash % ";
+	
+	// The number of characters in our message
+	int lengthenseash = strlen(enseash);
+	
+	// Display the enseash message
+	write(STDOUT_FILENO, enseash, lengthenseash);
+
+	}
+
+
+	// QUESTION 3
+	
+	If user types 'exit', terminate the shell
+    if (strcmp(buffer, "exit") == 0) {
+       return 0;
+    }
+
 	
 	return 0;
 }
