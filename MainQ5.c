@@ -28,8 +28,8 @@
 #include <sys/wait.h>
 #include <time.h>
 
-#define WELCOME "$ ./enseash\nWelcome to ENSEA Tiny Shell.\nType 'exit' to quit.\nenseash %"
-#define ENSEASH "enseash %"
+#define WELCOME "$ ./enseash\nWelcome to ENSEA Tiny Shell.\nType 'exit' to quit.\nenseash % "
+#define ENSEASH "enseash % "
 #define ERRORFORK "Error (fork failed)"
 #define ERROREXEC "Error (execvp failed)"
 #define BYE "\nBye bye...\n$"
