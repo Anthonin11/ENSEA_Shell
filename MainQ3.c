@@ -22,129 +22,101 @@
  */
 
 #include <unistd.h>
-#include <stdio.h>
 #include <string.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <time.h>
+
+#define WELCOME "$ ./enseash\nWelcome to ENSEA Tiny Shell.\nType 'exit' to quit.\nenseash %"
+#define ENSEASH "enseash %"
+#define ERRORFORK "Error (fork failed)"
+#define ERROREXEC "Error (execvp failed)"
+#define BYE "\nBye bye...\n$"
 
 void welcome(){	
-	// The welcome message that we want to display
-	const char *welcomemessage = "$ ./enseash\nWelcome to ENSEA Tiny Shell.\nType 'exit' to quit.\n";
-		
 	// Display the welcome message
-	write(STDOUT_FILENO, welcomemessage, strlen(welcomemessage) );
-}	
+	write(STDOUT_FILENO, WELCOME, strlen(WELCOME) );
+}
+
+void input(char *buffer){
+    // The user command length
+	ssize_t usercommand;	
+    // Read the user command
+	usercommand = read(STDIN_FILENO, buffer, sizeof(buffer) - 1);
+	// Check if <Ctrl>+D is pressed
+    if (usercommand == 0) {
+        // Set buffer to exit
+        strcpy(buffer,"exit");
+        return;
+    }
+    // Remove newline and null-terminate
+    buffer[usercommand - 1] = '\0';
+}
+
+int enter(const char *buffer){
+	// If only ENTER is pressed do nothing
+    if (strlen(buffer) == 0) {
+		// Re-display the prompt
+        write(STDOUT_FILENO, ENSEASH, strlen(ENSEASH) );
+        return 1;
+    }
+    return 0;
+}
+
+void process(const char *buffer){
+	// New process to execute the command
+	pid_t pid = fork();
+	if (pid == -1) {
+		// Error handling for fork()
+		perror(ERRORFORK);
+		return;
+	} else if (pid == 0) {
+		// Child process: execute the user command
+        char *args[] = {(char *)buffer, NULL}; // Prepare arguments for execvp
+        execvp(args[0], args); // Execute the command
+		// If execvp fails, print an error and exit the child process
+        perror(ERROREXEC);
+		return;
+	} else {
+        // Parent process: wait for the child to finish
+        wait(NULL);
+    }
+}
+
+void enseash(){
+	// Display the enseash message
+	write(STDOUT_FILENO, ENSEASH, strlen(ENSEASH) );
+}
+
+int output(const char *buffer){
+	// Management of the shell output with the command "exit"
+    if (strcmp(buffer, "exit") == 0) {
+        write(STDOUT_FILENO, BYE, strlen(BYE));
+        return 1;
+    }
+	return 0;
+}
 
 int main(){
 	
 	welcome(); // QUESTION 1
 	
-	// To store the return status or signal of the previous command
-	int last_exit_status = -1;
-	
-
 	// Loop that read the user command, execute it and ask again for user command.
 	while(1){
-		
-		// The maximum user command length
+		// The user command variable
 		char buffer[1024];
-    
-		// The user command length
-		ssize_t usercommand;	
-	
-		// Print the prompt enseash
-        if (last_exit_status == -1) {
-            // No previous command executed
-            write(STDOUT_FILENO, "enseash % ", 10);
-        } else if (WIFEXITED(last_exit_status)) {
-            // Command exited normally
-            dprintf(STDOUT_FILENO, "enseash [exit:%d|%dms] %% ", last_exit_status, last_exit_status);
-        } else if (WIFSIGNALED(last_exit_status)) {
-            // Command terminated by a signal
-            dprintf(STDOUT_FILENO, "enseash [sign:%d|%dms] %% ", last_exit_status, last_exit_status);
-        }
-	
-		// Read the user command
-		usercommand = read(STDIN_FILENO, buffer, sizeof(buffer));
-	
-		// Remove the next line character
-		buffer[usercommand - 1] = '\0';
-
-
-		// QUESTION 3
-	
-		// Management of the shell output with the command "exit"
-		if (strcmp(buffer, "exit") == 0) {
-				const char *exitmessage = "Bye bye...\n$";
-				int lengthexitmessage = strlen(exitmessage);
-				write(STDOUT_FILENO, exitmessage, lengthexitmessage);
-				break;
-		}
-	
-		// Management of the shell output with <ctrl>+d
-		if (usercommand == 0) {
-			const char *exitmessage = "\nBye bye...\n$";
-			int lengthexitmessage = strlen(exitmessage);
-			write(STDOUT_FILENO, exitmessage, lengthexitmessage);        
-			break;
-		}
 		
-		// Check if the user only pressed Enter (empty command)
-        if (buffer[0] == '\0') {
-            // Do nothing, just re-display the prompt
-            continue;
-        }
+		input(buffer); // QUESTION 2
+		
+		if (enter(buffer)){ continue; }
+				
+		if (output(buffer)){ break; } // QUESTION 3
+				
+		process(buffer); // QUESTION 2
+		
+		enseash(); // QUESTION 2
 
-		 // Measure start time using clock_gettime()
-        struct timespec start_time, end_time;
-        clock_gettime(CLOCK_MONOTONIC, &start_time);
-
-		// New process to execute the command
-		pid_t pid = fork();
-
-		if (pid == -1) {
-            // Error handling for fork
-            perror("fork failed");
-            return 1;
-        } else if (pid == 0) {
-            // Child process: execute the user command
-            char *args[] = {buffer, NULL};
-            execvp(args[0], args);
-            // If execvp fails, print an error and exit the child process
-            perror("execvp failed");
-            return 1;
-        } else {
-            // Parent process: wait for the child to finish and get the exit status
-            int status;
-            waitpid(pid, &status, 0);
-			
-			// Measure end time after the command finishes
-            clock_gettime(CLOCK_MONOTONIC, &end_time);
-
-			// Calculate elapsed time in milliseconds
-            long elapsed_time = (end_time.tv_sec - start_time.tv_sec) * 1000 + (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
-			
-			// Check if the child process exited normally or was terminated by a signal
-            if (WIFEXITED(status)) {
-                last_exit_status = WEXITSTATUS(status);  // Command exited normally
-            } else if (WIFSIGNALED(status)) {
-                last_exit_status = WTERMSIG(status);  // Command terminated by a signal
-            }
-        
-			// Display the prompt with exit status and elapsed time
-            if (WIFEXITED(status)) {
-                // Command exited normally
-                dprintf(STDOUT_FILENO, "enseash [exit:%d|%ldms] %% ", last_exit_status, elapsed_time);
-            } else if (WIFSIGNALED(status)) {
-                // Command terminated by a signal
-                dprintf(STDOUT_FILENO, "enseash [sign:%d|%ldms] %% ", last_exit_status, elapsed_time);
-            }
-        }
 	}
-
 
 	return 0;
 }
-
-
