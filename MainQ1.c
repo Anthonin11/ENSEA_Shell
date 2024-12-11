@@ -22,17 +22,13 @@
  */
 
 #include <unistd.h>
-#include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <time.h>
+
+#define WELCOME "$ ./enseash\nWelcome to ENSEA Tiny Shell.\nType 'exit' to quit.\nenseash %"
 
 void welcome(){	
-	// The welcome message that we want to display
-	const char *welcomemessage = "$ ./enseash\nWelcome to ENSEA Tiny Shell.\nType 'exit' to quit.\nenseash %";
 	// Display the welcome message
-	write(STDOUT_FILENO, welcomemessage, strlen(welcomemessage) );
+	write(STDOUT_FILENO, WELCOME, strlen(WELCOME) );
 }	
 
 int main(){
@@ -41,5 +37,3 @@ int main(){
 	
 	return 0;
 }
-
-
