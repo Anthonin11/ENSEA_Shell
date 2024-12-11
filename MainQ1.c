@@ -31,7 +31,6 @@
 void welcome(){	
 	// The welcome message that we want to display
 	const char *welcomemessage = "$ ./enseash\nWelcome to ENSEA Tiny Shell.\nType 'exit' to quit.\nenseash %";
-		
 	// Display the welcome message
 	write(STDOUT_FILENO, welcomemessage, strlen(welcomemessage) );
 }	
