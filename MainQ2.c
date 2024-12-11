@@ -29,6 +29,8 @@
 
 #define WELCOME "$ ./enseash\nWelcome to ENSEA Tiny Shell.\nType 'exit' to quit.\nenseash %"
 #define ENSEASH "enseash %"
+#define ERRORFORK "Error (fork failed)"
+#define ERROREXEC "Error (execvp failed)"
 
 void welcome(){	
 	// Display the welcome message
@@ -59,14 +61,14 @@ void process(const char *buffer){
 	pid_t pid = fork();
 	if (pid == -1) {
 		// Error handling for fork()
-		perror("fork failed");
+		perror(ERRORFORK);
 		return;
 	} else if (pid == 0) {
 		// Child process: execute the user command
         char *args[] = {(char *)buffer, NULL}; // Prepare arguments for execvp
         execvp(args[0], args); // Execute the command
 		// If execvp fails, print an error and exit the child process
-        perror("Incorrect command (execvp failed)");
+        perror(ERROREXEC);
 		return;
 	} else {
         // Parent process: wait for the child to finish
